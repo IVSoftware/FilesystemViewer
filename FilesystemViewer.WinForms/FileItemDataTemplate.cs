@@ -1,8 +1,9 @@
-﻿using FilesAndFolders.Portable;
-using FilesAndFolders.WinForms;
-using System.Xml.Serialization;
+﻿
 
-namespace FilesAndFolders
+using FilesystemViewer.Portable;
+using IVSoftware.Portable.Xml.Linq.XBoundObject.Placement;
+
+namespace FilesystemViewer.WinForms
 {
     public partial class FileItemDataTemplate : UserControl
     {
@@ -15,7 +16,7 @@ namespace FilesAndFolders
                 Control? current = this.Parent; 
                 while (current is not null)
                 {
-                    if(current.DataContext is MainPageViewModel vm)
+                    if(current.DataContext is FilesystemItem vm)
                     {
                         vm.PlusMinusToggleCommand?.Execute(DataContext);
                         break;
@@ -69,10 +70,13 @@ namespace FilesAndFolders
                 TextLabel.DataBindings.Add(nameof(TextLabel.Text), DataContext, nameof(DataContext.Text), false, DataSourceUpdateMode.OnPropertyChanged);
             }
         }
-        public new FileItem? DataContext
+        public new FilesystemItem? DataContext
         {
-            get => (FileItem?)base.DataContext;
+            get => (FilesystemItem?)base.DataContext;
             set => base.DataContext = value;
         }
+
+#if false
+#endif
     }
 }

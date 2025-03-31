@@ -1,4 +1,4 @@
-﻿namespace FilesAndFolders
+﻿namespace FilesystemViewer.WinForms
 {
     partial class MainForm
     {

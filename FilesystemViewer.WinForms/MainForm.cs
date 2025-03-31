@@ -1,113 +1,45 @@
-using FilesAndFolders.Portable;
-using FilesAndFolders.WinForms;
+using FilesystemViewer.Portable;
 using IVSoftware.Portable;
 using IVSoftware.Portable.Xml.Linq.XBoundObject;
+using IVSoftware.Portable.Xml.Linq.XBoundObject.Placement;
 using System.Collections.Specialized;
 using System.Diagnostics;
 
-namespace FilesAndFolders
+namespace FilesystemViewer.WinForms
 {
     public partial class MainForm : Form
     {
         public MainForm()
         {
             InitializeComponent();
-            base.DataContext = new MainPageViewModel();
-            Load += (sender, e) => DataContext.InitDrives();
-
-            DataContext.FileItems.CollectionChanged += (sender, e) =>
+            base.DataContext = new FilesystemViewModel();
+            Load += (sender, e) =>
             {
-                switch (e.Action)
+                DataContext.InitFileSystem();
+                
+                if(DataContext.XRoot.To<ViewContext>() is { } context)
                 {
-                    case NotifyCollectionChangedAction.Add:
-                        localAdd();
-                        break;
-                    case NotifyCollectionChangedAction.Remove:
-                        localRemove();
-                        break;
-                    case NotifyCollectionChangedAction.Replace:
-                        localAdd();
-                        localRemove();
-                        break;
-                    case NotifyCollectionChangedAction.Reset:
-                        FileCollectionView.Controls.Clear();
-                        break;
-                    case NotifyCollectionChangedAction.Move:
-                    default: throw new NotImplementedException("Unhandled collection change action.");
-                }
-                wdtCollectionChangeSettled.StartOrRestart();
-                #region L o c a l F x       
-                void localAdd()
-                {
-                    foreach (
-                        var item in
-                        e.NewItems
-                        ?.OfType<FileItem>() 
-                        ?? Enumerable.Empty<FileItem>())
+                    ViewContext = context;
+                    ViewContext.DisableXObjectChangeEvents.BeginUsing += (sender, e) =>
                     {
-                        FileCollectionView.Add(item);
-                    }
-                }
-
-                void localRemove()
-                {
-                    foreach (
-                    var item in e.OldItems
-                        ?.OfType<FileItem>()
-                        ?? Enumerable.Empty<FileItem>())
+                        UseWaitCursor = true;
+                    };
+                    ViewContext.DisableXObjectChangeEvents.FinalDispose += (sender, e) =>
                     {
-                        FileCollectionView.Hide(item);
-                    }
-                }		
-                #endregion L o c a l F x
-            };
-        }
-        new MainPageViewModel DataContext => (MainPageViewModel)base.DataContext!;
-
-        SemaphoreSlim _reentrancy = new SemaphoreSlim(1, 1);
-        public WatchdogTimer wdtCollectionChangeSettled
-        {
-            get
-            {
-                if (_wdtCollectionChangeSettled is null)
-                {
-                    _wdtCollectionChangeSettled = new WatchdogTimer { Interval = TimeSpan.FromMilliseconds(100) };
-                    _wdtCollectionChangeSettled.RanToCompletion += async(sender, e) =>
-                    {
-                        await _reentrancy.WaitAsync();
-                        BeginInvoke(() =>
-                        {
-                            try
-                            {
-                                int index = 0;
-                                foreach (var xel in DataContext.XRoot.VisibleElements())
-                                {
-                                    if (
-                                        xel.To<FileItem>() is { } fileItem &&
-                                        fileItem.DataTemplate is Control control &&
-                                        control.Parent is FlowLayoutPanel parent)
-                                    {
-                                        parent.Controls.SetChildIndex(control, index++);
-                                        control.Show();
-                                    }
-                                }
-                            }
-                            finally
-                            {
-                                _reentrancy?.Release();
-                            }
-                        });
+                        var currentItems = ViewContext.ToString();
+                        UseWaitCursor = false;
                     };
                 }
-                return _wdtCollectionChangeSettled;
-            }
+            };
         }
-        WatchdogTimer? _wdtCollectionChangeSettled = null;
+        ViewContext? ViewContext { get; set; }
+        new FilesystemViewModel DataContext => (FilesystemViewModel)base.DataContext!;
     }
     static partial class Extensions
     {
-        public static void Add(this FlowLayoutPanel @this, FileItem fileItem)
+        public static void Add(this FlowLayoutPanel @this, IXBoundViewObject fileItem)
         {
+#if false
             if (fileItem.DataTemplate is Control control)
             {
                 if (control.Parent is FlowLayoutPanel)
@@ -129,18 +61,25 @@ namespace FilesAndFolders
                 Visible = false,
             };
             @this.Controls.Add((Control)fileItem.DataTemplate);
+
+#endif
         }
         public static void Hide(this FlowLayoutPanel @this, FileItem fileItem)
-            => (fileItem.DataTemplate as Control)?.Hide();
+        {
+            // (fileItem.DataTemplate as Control)?.Hide();
+        }
+
 
         public static void Remove(this FlowLayoutPanel @this, FileItem fileItem)
         {
+#if false
             Debug.Fail("Expecting this method to remain unused. Has this changed?");
             if (fileItem.DataTemplate is Control control)
             {
                 fileItem.DataTemplate = null;
                 @this.Controls.Remove(control);
             }
+#endif
         }
     }
 }

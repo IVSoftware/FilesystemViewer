@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FilesAndFolders.WinForms
+namespace FilesystemViewer.WinForms
 {
     public static class Provider
     {
