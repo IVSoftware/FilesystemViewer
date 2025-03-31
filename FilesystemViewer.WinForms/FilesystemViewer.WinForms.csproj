@@ -9,6 +9,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Resources\Fonts\file-folder-drive-icons\font\file-folder-drive-icons.ttf" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\Fonts\file-folder-drive-icons\font\file-folder-drive-icons.ttf" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="IVSoftware.Portable.Xml.Linq.XBoundObject" Version="2.0.0" />
   </ItemGroup>
 

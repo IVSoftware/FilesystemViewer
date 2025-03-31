@@ -24,33 +24,41 @@ namespace FilesystemViewer.WinForms
                     {
                         UseWaitCursor = true;
                     };
-                    ViewContext.DisableXObjectChangeEvents.FinalDispose += (sender, e) =>
+                    ViewContext.DisableXObjectChangeEvents.FinalDispose += async(sender, e) =>
                     {
+                        await (_reentrancyCheck.WaitAsync());
+                        try
+                        {
+                            var visibleFilesytemItems = 
+                            ViewContext.Items?
+                            .OfType<FilesystemItem>()
+                            .ToArray() ?? Array.Empty<FilesystemItem>();
+                            FileCollectionView.Controls.Clear();
+                            foreach (var fileItem in visibleFilesytemItems)
+                            {
+                                FileCollectionView.Add(fileItem);
+                            }
+                        }
+                        finally
+                        {
+                            _reentrancyCheck.Release();
+                        }
                         var currentItems = ViewContext.ToString();
                         UseWaitCursor = false;
                     };
                 }
             };
         }
+        SemaphoreSlim _reentrancyCheck = new SemaphoreSlim(1, 1);
         ViewContext? ViewContext { get; set; }
         new FilesystemViewModel DataContext => (FilesystemViewModel)base.DataContext!;
     }
     static partial class Extensions
     {
-        public static void Add(this FlowLayoutPanel @this, IXBoundViewObject fileItem)
+        public static void Add(this FlowLayoutPanel @this, FilesystemItem fileItem)
         {
-#if false
-            if (fileItem.DataTemplate is Control control)
-            {
-                if (control.Parent is FlowLayoutPanel)
-                {
-                    control.Show();
-                    return;
-                }
-                else fileItem.DataTemplate = null;
-            }
             var MARGIN = new Padding(2);
-            fileItem.DataTemplate = new FileItemDataTemplate
+            var dataTemplate = new FileItemDataTemplate
             {
                 AutoSize = false,
                 Margin = MARGIN,
@@ -58,11 +66,9 @@ namespace FilesystemViewer.WinForms
                     @this.Width - @this.Padding.Horizontal
                     - SystemInformation.VerticalScrollBarWidth - MARGIN.Horizontal,
                 DataContext = fileItem,
-                Visible = false,
+                Visible = true,
             };
-            @this.Controls.Add((Control)fileItem.DataTemplate);
-
-#endif
+            @this.Controls.Add(dataTemplate);
         }
         public static void Hide(this FlowLayoutPanel @this, FileItem fileItem)
         {

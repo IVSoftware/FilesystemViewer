@@ -1,7 +1,5 @@
 ﻿
-
 using FilesystemViewer.Portable;
-using IVSoftware.Portable.Xml.Linq.XBoundObject.Placement;
 
 namespace FilesystemViewer.WinForms
 {
@@ -13,15 +11,9 @@ namespace FilesystemViewer.WinForms
             Height = 50;
             PlusMinus.Click += (sender, e)=>
             {
-                Control? current = this.Parent; 
-                while (current is not null)
+                if(DataContext is FilesystemItem vm)
                 {
-                    if(current.DataContext is FilesystemItem vm)
-                    {
-                        vm.PlusMinusToggleCommand?.Execute(DataContext);
-                        break;
-                    }
-                    current = current.Parent;
+                    vm.PlusMinusToggleCommand?.Execute(DataContext);
                 }
             };
         }
@@ -48,7 +40,7 @@ namespace FilesystemViewer.WinForms
             {
                 if (_fileAndFolderFontFamily is null)
                 {
-                    _fileAndFolderFontFamily = "file-and-folder-icons".LoadFamilyFromEmbeddedFont();
+                    _fileAndFolderFontFamily = "file-folder-drive-icons".LoadFamilyFromEmbeddedFont();
                 }
                 return _fileAndFolderFontFamily;
             }
@@ -75,8 +67,5 @@ namespace FilesystemViewer.WinForms
             get => (FilesystemItem?)base.DataContext;
             set => base.DataContext = value;
         }
-
-#if false
-#endif
     }
 }
