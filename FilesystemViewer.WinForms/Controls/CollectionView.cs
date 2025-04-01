@@ -4,8 +4,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
-using System.ComponentModel;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -13,7 +13,16 @@ namespace FilesystemViewer.WinForms.Controls
 {
     public class CollectionView : FlowLayoutPanel
     {
-        readonly List<INotifyPropertyChanged> _trackedItems = new();
+        protected override CreateParams CreateParams 
+        {
+            get
+            {
+                CreateParams cp = base.CreateParams;
+                // WS_EX_COMPOSITED
+                base.CreateParams.ExStyle |= 0x02000000; 
+                return cp;
+            }
+        }
         public IList? ItemsSource
         {
             get => _itemsSource;
@@ -106,7 +115,6 @@ namespace FilesystemViewer.WinForms.Controls
                 }
             }
         }
-
         IList? _itemsSource = null;
         public Type DataTemplate
         {
@@ -123,19 +131,41 @@ namespace FilesystemViewer.WinForms.Controls
             }
         }
         Type? _dataTemplate = null;
-
-        /// <summary>
-        /// Synchronizes the <see cref="Items"/> collection to match the current set of visible
-        /// <see cref="XElement"/> nodes in <see cref="XEL"/>. Ensures each bound object is in 
-        /// the correct order, inserts missing items, and removes extraneous ones.
-        /// </summary>
-        /// <exception cref="InvalidOperationException">
-        /// Thrown if <see cref="Items"/> is not an <see cref="ObservableCollection{T}"/> where T implements <see cref="IXBoundViewObject"/>.
-        /// </exception>
         public void SyncItems(IEnumerable items)
+            => ItemsSource?.SyncItems(items);
+        protected override void OnControlAdded(ControlEventArgs e)
         {
-            if (ItemsSource is null) throw new NullReferenceException(
-                $"{nameof(ItemsSource)} must be set before calling {nameof(SyncItems)}.");
+            base.OnControlAdded(e);
+            if(e.Control is not null) SetItemWidth(e.Control);
+        }
+        protected override void OnSizeChanged(EventArgs e)
+        {
+            base.OnSizeChanged(e);
+            foreach(Control control in Controls)
+            {
+                SetItemWidth(control);
+            }
+        }
+        void SetItemWidth(Control item)
+        {
+            var MARGIN = new Padding(2);
+            Margin = MARGIN;
+            item.Width =
+                Width - Padding.Horizontal
+                    - SystemInformation.VerticalScrollBarWidth - MARGIN.Horizontal;
+        }
+    }
+    static class Extensions
+    {
+        /// <summary>
+        /// Synchronizes the contents of the list with the specified
+        /// enumerable by reference equality, inserting or removing 
+        /// items as needed to match the sequence.
+        /// </summary>
+        public static void SyncItems(this IList @this, IEnumerable items)
+        {
+            if (@this is null) throw new NullReferenceException(
+                $"{nameof(@this)} must be set before calling {nameof(SyncItems)}.");
             object[] sbItems =
                 items as object[]
                 ?? items
@@ -152,9 +182,9 @@ namespace FilesystemViewer.WinForms.Controls
                     isAtIndex;
 
                 // Different! Relative to the current CONTROL COUNT.
-                if (index < ItemsSource?.Count)
+                if (index < @this?.Count)
                 {
-                    isAtIndex = ItemsSource[index];
+                    isAtIndex = @this[index];
                     if (ReferenceEquals(isAtIndex, sbAtIndex))
                     {   /* G T K */
                         // N O O P
@@ -162,18 +192,18 @@ namespace FilesystemViewer.WinForms.Controls
                     }
                     else
                     {
-                        ItemsSource?.Insert(index, sbAtIndex);
+                        @this?.Insert(index, sbAtIndex);
                     }
                 }
                 else
                 {
-                    ItemsSource?.Insert(index, sbItems[index]);
+                    @this?.Insert(index, sbItems[index]);
                 }
                 index++;
             }
-            while (index < ItemsSource?.Count)
+            while (index < @this?.Count)
             {
-                ItemsSource.RemoveAt(index);
+                @this.RemoveAt(index);
             }
         }
     }

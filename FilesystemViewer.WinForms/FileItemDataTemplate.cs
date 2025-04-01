@@ -13,12 +13,15 @@ namespace FilesystemViewer.WinForms
             InitializeComponent();
             Height = 50;
             PlusMinus.UseCompatibleTextRendering = true;
-            PlusMinus.Font = new Font(FileAndFolderFontFamily, 16F);
-            PlusMinus.Click += (sender, e) =>
+            PlusMinus.Font = new Font(FileAndFolderFontFamily, 14F);
+            PlusMinus.MouseDown += (sender, e) =>
             {
                 if (DataContext is FilesystemItem vm)
                 {
-                    vm.PlusMinusToggleCommand?.Execute(DataContext);
+                    BeginInvoke(() => 
+                    {
+                        vm.PlusMinusToggleCommand?.Execute(DataContext);
+                    });
                 }
             };
         }

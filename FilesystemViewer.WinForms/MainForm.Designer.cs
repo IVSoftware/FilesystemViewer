@@ -37,10 +37,12 @@ namespace FilesystemViewer.WinForms
             // 
             FileCollectionView.AutoScroll = true;
             FileCollectionView.BackColor = Color.AliceBlue;
+            FileCollectionView.DataTemplate = typeof(Control);
             FileCollectionView.Dock = DockStyle.Fill;
+            FileCollectionView.ItemsSource = null;
             FileCollectionView.Location = new Point(2, 2);
             FileCollectionView.Name = "FileCollectionView";
-            FileCollectionView.Size = new Size(474, 740);
+            FileCollectionView.Size = new Size(514, 900);
             FileCollectionView.TabIndex = 1;
             // 
             // MainForm
@@ -48,12 +50,12 @@ namespace FilesystemViewer.WinForms
             AutoScaleDimensions = new SizeF(10F, 25F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.RoyalBlue;
-            ClientSize = new Size(478, 744);
+            ClientSize = new Size(518, 904);
             Controls.Add(FileCollectionView);
             Name = "MainForm";
             Padding = new Padding(2);
             StartPosition = FormStartPosition.CenterScreen;
-            Text = "Main Form";
+            Text = "FilesystemViewer.WinForms";
             ResumeLayout(false);
         }
 
