@@ -1,5 +1,6 @@
 ﻿
 using FilesystemViewer.Portable;
+using System.ComponentModel;
 
 namespace FilesystemViewer.WinForms
 {
@@ -9,6 +10,8 @@ namespace FilesystemViewer.WinForms
         {
             InitializeComponent();
             Height = 50;
+            PlusMinus.UseCompatibleTextRendering = true;
+            PlusMinus.Font = new Font(FileAndFolderFontFamily, 16F);
             PlusMinus.Click += (sender, e)=>
             {
                 if(DataContext is FilesystemItem vm)
@@ -46,26 +49,50 @@ namespace FilesystemViewer.WinForms
             }
         }
         FontFamily? _fileAndFolderFontFamily = null;
-        protected override void OnDataContextChanged(EventArgs e)
-        {
-            base.OnDataContextChanged(e);
-            if (DataContext is not null)
-            {
-                Spacer.DataBindings.Clear();
-                PlusMinus.DataBindings.Clear();
-                TextLabel.DataBindings.Clear();
-
-                Spacer.DataBindings.Add(nameof(Spacer.Width), DataContext, nameof(DataContext.Space), false, DataSourceUpdateMode.OnPropertyChanged);
-                PlusMinus.Font = new Font(FileAndFolderFontFamily, 16F);
-                PlusMinus.UseCompatibleTextRendering = true;
-                PlusMinus.DataBindings.Add(nameof(PlusMinus.Text), DataContext, nameof(DataContext.PlusMinusGlyph), false, DataSourceUpdateMode.OnPropertyChanged);
-                TextLabel.DataBindings.Add(nameof(TextLabel.Text), DataContext, nameof(DataContext.Text), false, DataSourceUpdateMode.OnPropertyChanged);
-            }
-        }
-        public new FilesystemItem? DataContext
-        {
+        public new FilesystemItem? DataContext 
+        { 
             get => (FilesystemItem?)base.DataContext;
-            set => base.DataContext = value;
+            set
+            { 
+                if(DataContext is not null)
+                {
+                    DataContext.PropertyChanged -= localOnDataContextPropertyChanged;
+                }
+                base.DataContext = value;
+                if(DataContext is not null)
+                {
+                    DataContext.PropertyChanged += localOnDataContextPropertyChanged;
+                    foreach (var propertyName in new[] 
+                    {
+                        nameof(DataContext.Text),
+                        nameof(DataContext.Space),
+                        nameof(DataContext.PlusMinusGlyph),
+                    })
+                    {
+                        localOnDataContextPropertyChanged(DataContext, new PropertyChangedEventArgs(propertyName));
+                    }
+                }
+                void localOnDataContextPropertyChanged(object? sender, PropertyChangedEventArgs e)
+                {
+                    if (DataContext is not null)
+                    {
+                        switch (e.PropertyName)
+                        {
+                            case nameof(DataContext.Text):
+                                TextLabel.Text = DataContext.Text;
+                                break;
+                            case nameof(PlusMinus):
+                                break;
+                            case nameof(DataContext.Space):
+                                Spacer.Width = DataContext.Space;
+                                break;
+                            case nameof(DataContext.PlusMinusGlyph):
+                                PlusMinus.Text = DataContext.PlusMinusGlyph;
+                                break;
+                        }
+                    }
+                }
+            }
         }
     }
 }
