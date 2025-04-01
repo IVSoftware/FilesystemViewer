@@ -25,23 +25,6 @@ namespace FilesystemViewer.WinForms
                 }
             };
         }
-        protected override void OnParentChanged(EventArgs e)
-        {
-            base.OnParentChanged(e);
-            if (Parent?.TopLevelControl is Control form)
-            {
-                form.SizeChanged -= localOnSizeChanged;
-                form.SizeChanged += localOnSizeChanged;
-            }
-            void localOnSizeChanged(object? sender, EventArgs e)
-            {
-                var MARGIN = new Padding(2);
-                Margin = MARGIN;
-                Width =
-                    Parent.Width - Parent.Padding.Horizontal
-                        - SystemInformation.VerticalScrollBarWidth - MARGIN.Horizontal;
-            }
-        }
         public FontFamily FileAndFolderFontFamily
         {
             get
