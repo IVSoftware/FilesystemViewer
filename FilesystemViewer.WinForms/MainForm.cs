@@ -2,8 +2,10 @@ using FilesystemViewer.Portable;
 using IVSoftware.Portable;
 using IVSoftware.Portable.Xml.Linq.XBoundObject;
 using IVSoftware.Portable.Xml.Linq.XBoundObject.Placement;
+using System.Collections;
 using System.Collections.Specialized;
 using System.Diagnostics;
+using static System.Windows.Forms.Control;
 
 namespace FilesystemViewer.WinForms
 {
@@ -33,11 +35,18 @@ namespace FilesystemViewer.WinForms
                             ViewContext.Items?
                             .OfType<FilesystemItem>()
                             .ToArray() ?? Array.Empty<FilesystemItem>();
+#if true
+                            FileCollectionView.SyncItems(visibleFilesytemItems);
+#else
                             FileCollectionView.Controls.Clear();
+                            int index = 0;
                             foreach (var fileItem in visibleFilesytemItems)
                             {
+
                                 FileCollectionView.Add(fileItem);
+                                index++;
                             }
+#endif
                         }
                         finally
                         {
@@ -55,7 +64,7 @@ namespace FilesystemViewer.WinForms
     }
     static partial class Extensions
     {
-        public static void Add(this FlowLayoutPanel @this, FilesystemItem fileItem)
+        public static FileItemDataTemplate Add(this Control @this, FilesystemItem fileItem)
         {
             var MARGIN = new Padding(2);
             var dataTemplate = new FileItemDataTemplate
@@ -69,23 +78,104 @@ namespace FilesystemViewer.WinForms
                 Visible = true,
             };
             @this.Controls.Add(dataTemplate);
+            return dataTemplate;
         }
-        public static void Hide(this FlowLayoutPanel @this, FileItem fileItem)
+        public static void Insert(this Control @this, int index, FilesystemItem fileItem)
         {
-            // (fileItem.DataTemplate as Control)?.Hide();
+            var dataTemplate = @this.Add(fileItem);
+            @this.Controls.SetChildIndex(dataTemplate, index);
         }
-
-
-        public static void Remove(this FlowLayoutPanel @this, FileItem fileItem)
+        public static void SetChildIndex(this Control @this, FilesystemItem fileItem, int index)
         {
-#if false
-            Debug.Fail("Expecting this method to remain unused. Has this changed?");
-            if (fileItem.DataTemplate is Control control)
+            if( @this
+                .Controls
+                .OfType<FileItemDataTemplate>()
+                .FirstOrDefault(_=>ReferenceEquals(_.DataContext, fileItem)) is { } exists)
             {
-                fileItem.DataTemplate = null;
-                @this.Controls.Remove(control);
+                @this.Controls.SetChildIndex(exists, index);
             }
-#endif
+            else
+            {
+                @this.Insert(index, fileItem);
+            }
+        }
+
+
+        public static void Remove(this Control @this, FilesystemItem fileItem)
+        {
+            @this
+                .Controls
+                .Remove(
+                    @this
+                    .Controls
+                    .OfType<FileItemDataTemplate>()
+                    .First(_ => ReferenceEquals(_.DataContext, fileItem)));
+        }
+
+        /// <summary>
+        /// Synchronizes the <see cref="Items"/> collection to match the current set of visible
+        /// <see cref="XElement"/> nodes in <see cref="XEL"/>. Ensures each bound object is in 
+        /// the correct order, inserts missing items, and removes extraneous ones.
+        /// </summary>
+        /// <exception cref="InvalidOperationException">
+        /// Thrown if <see cref="Items"/> is not an <see cref="ObservableCollection{T}"/> where T implements <see cref="IXBoundViewObject"/>.
+        /// </exception>
+        public static void SyncItems(this Control @this, FilesystemItem[] items )
+        {
+            var controls = @this.Controls;
+            int index = 0;
+
+
+            // Different than below! Relative to the current ITEMS COUNT.
+            while (index < items.Length)
+            {
+                FilesystemItem 
+                    sbAtIndex = items[index],
+                    isAtIndex;
+
+                // Different! Relative to the current CONTROL COUNT.
+                if (index < controls.Count)
+                {
+                    isAtIndex =
+                        (FilesystemItem?)controls[index]
+                        .DataContext
+                        ?? throw new IndexOutOfRangeException();
+                    while (index < controls.Count)
+                    {
+                        if (isAtIndex.IsVisible)
+                        {
+                            break;
+                        }
+                        else
+                        {
+                            // Remove "not visible" item
+                            @this.Remove(isAtIndex);
+                            isAtIndex =
+                                (FilesystemItem?)controls[index]
+                                .DataContext 
+                                ?? throw new IndexOutOfRangeException();
+                        }
+                    }
+                    if (ReferenceEquals(isAtIndex, sbAtIndex))
+                    {   /* G T K */
+                        // N O O P
+                        // Item is already at the correct index.
+                    }
+                    else
+                    {
+                        @this.SetChildIndex(sbAtIndex, index);
+                    }
+                }
+                else
+                {
+                    @this.Insert(index, items[index]);
+                }
+                index++;
+            }
+            while (index < controls.Count)
+            {
+                //Items.RemoveAt(index);
+            }
         }
     }
 }

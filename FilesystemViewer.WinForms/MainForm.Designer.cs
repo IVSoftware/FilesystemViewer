@@ -1,4 +1,6 @@
-﻿namespace FilesystemViewer.WinForms
+﻿using FilesystemViewer.WinForms.Controls;
+
+namespace FilesystemViewer.WinForms
 {
     partial class MainForm
     {
@@ -28,7 +30,7 @@
         /// </summary>
         private void InitializeComponent()
         {
-            FileCollectionView = new FlowLayoutPanel();
+            FileCollectionView = new CollectionView();
             SuspendLayout();
             // 
             // FileCollectionView
@@ -56,6 +58,6 @@
         }
 
         #endregion
-        private FlowLayoutPanel FileCollectionView;
+        private CollectionView FileCollectionView;
     }
 }
