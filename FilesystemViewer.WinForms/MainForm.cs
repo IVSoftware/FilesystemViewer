@@ -3,6 +3,7 @@ using IVSoftware.Portable;
 using IVSoftware.Portable.Xml.Linq.XBoundObject;
 using IVSoftware.Portable.Xml.Linq.XBoundObject.Placement;
 using System.Collections;
+using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Diagnostics;
 using static System.Windows.Forms.Control;
@@ -15,6 +16,8 @@ namespace FilesystemViewer.WinForms
         {
             InitializeComponent();
             base.DataContext = new FilesystemViewModel();
+            FileCollectionView.DataTemplate = typeof(FileItemDataTemplate);
+            FileCollectionView.ItemsSource = new ObservableCollection<FilesystemItem>();
             Load += (sender, e) =>
             {
                 DataContext.InitFileSystem();
@@ -110,72 +113,6 @@ namespace FilesystemViewer.WinForms
                     .Controls
                     .OfType<FileItemDataTemplate>()
                     .First(_ => ReferenceEquals(_.DataContext, fileItem)));
-        }
-
-        /// <summary>
-        /// Synchronizes the <see cref="Items"/> collection to match the current set of visible
-        /// <see cref="XElement"/> nodes in <see cref="XEL"/>. Ensures each bound object is in 
-        /// the correct order, inserts missing items, and removes extraneous ones.
-        /// </summary>
-        /// <exception cref="InvalidOperationException">
-        /// Thrown if <see cref="Items"/> is not an <see cref="ObservableCollection{T}"/> where T implements <see cref="IXBoundViewObject"/>.
-        /// </exception>
-        public static void SyncItems(this Control @this, FilesystemItem[] items )
-        {
-            var controls = @this.Controls;
-            int index = 0;
-
-
-            // Different than below! Relative to the current ITEMS COUNT.
-            while (index < items.Length)
-            {
-                FilesystemItem 
-                    sbAtIndex = items[index],
-                    isAtIndex;
-
-                // Different! Relative to the current CONTROL COUNT.
-                if (index < controls.Count)
-                {
-                    isAtIndex =
-                        (FilesystemItem?)controls[index]
-                        .DataContext
-                        ?? throw new IndexOutOfRangeException();
-                    while (index < controls.Count)
-                    {
-                        if (isAtIndex.IsVisible)
-                        {
-                            break;
-                        }
-                        else
-                        {
-                            // Remove "not visible" item
-                            @this.Remove(isAtIndex);
-                            isAtIndex =
-                                (FilesystemItem?)controls[index]
-                                .DataContext 
-                                ?? throw new IndexOutOfRangeException();
-                        }
-                    }
-                    if (ReferenceEquals(isAtIndex, sbAtIndex))
-                    {   /* G T K */
-                        // N O O P
-                        // Item is already at the correct index.
-                    }
-                    else
-                    {
-                        @this.SetChildIndex(sbAtIndex, index);
-                    }
-                }
-                else
-                {
-                    @this.Insert(index, items[index]);
-                }
-                index++;
-            }
-            while (index < controls.Count)
-            {
-                //Items.RemoveAt(index);
-            }
         }
     }
 }

@@ -51,25 +51,25 @@ namespace FilesystemViewer.WinForms
             }
         }
         FontFamily? _fileAndFolderFontFamily = null;
-        public new FilesystemItem? DataContext
+
+        protected override void OnDataContextChanged(EventArgs e)
         {
-            get => (FilesystemItem?)base.DataContext;
-            set
+            base.OnDataContextChanged(e);
+            if(!ReferenceEquals(_dataContextPrev, DataContext))
             {
-                if (DataContext is not null)
+                if (_dataContextPrev is INotifyPropertyChanged inpcB4)
                 {
-                    DataContext.PropertyChanged -= localOnDataContextPropertyChanged;
+                    inpcB4.PropertyChanged -= localOnDataContextPropertyChanged;
                 }
-                base.DataContext = value;
-                if (DataContext is not null)
+                if (DataContext is INotifyPropertyChanged inpcFTR)
                 {
-                    DataContext.PropertyChanged += localOnDataContextPropertyChanged;
+                    inpcFTR.PropertyChanged += localOnDataContextPropertyChanged;
                     foreach (var propertyName in new[]
                     {
-                        nameof(DataContext.Text),
-                        nameof(DataContext.Space),
-                        nameof(DataContext.PlusMinus),
-                        nameof(DataContext.PlusMinusGlyph),
+                        nameof(FilesystemItem.Text),
+                        nameof(FilesystemItem.Space),
+                        nameof(FilesystemItem.PlusMinus),
+                        nameof(FilesystemItem.PlusMinusGlyph),
                     })
                     {
                         localOnDataContextPropertyChanged(DataContext, new PropertyChangedEventArgs(propertyName));
@@ -77,29 +77,29 @@ namespace FilesystemViewer.WinForms
                 }
                 void localOnDataContextPropertyChanged(object? sender, PropertyChangedEventArgs e)
                 {
-                    if (DataContext is not null)
+                    if (DataContext is FilesystemItem fsItem)
                     {
                         switch (e.PropertyName)
                         {
-                            case nameof(DataContext.Text):
-                                TextLabel.Text = DataContext.Text;
+                            case nameof(FilesystemItem.Text):
+                                TextLabel.Text = fsItem.Text;
                                 break;
-                            case nameof(PlusMinus):
+                            case nameof(FilesystemItem.PlusMinus):
                                 PlusMinus.ForeColor = localConvert();
                                 break;
-                            case nameof(DataContext.Space):
-                                Spacer.Width = DataContext.Space;
+                            case nameof(FilesystemItem.Space):
+                                Spacer.Width = fsItem.Space;
                                 break;
-                            case nameof(DataContext.PlusMinusGlyph):
-                                PlusMinus.Text = DataContext.PlusMinusGlyph;
+                            case nameof(FilesystemItem.PlusMinusGlyph):
+                                PlusMinus.Text = fsItem.PlusMinusGlyph;
                                 break;
                         }
                         Color localConvert()
                         {
-                            switch (DataContext)
+                            switch (fsItem)
                             {
                                 case DriveItem:
-                                    switch (DataContext.PlusMinus)
+                                    switch (fsItem.PlusMinus)
                                     {
                                         case IVSoftware.Portable.Xml.Linq.XBoundObject.Placement.PlusMinus.Leaf:
                                             return Color.Gray;
@@ -109,7 +109,7 @@ namespace FilesystemViewer.WinForms
                                             return Color.Green;
                                     }
                                 default:
-                                    switch (DataContext.PlusMinus)
+                                    switch (fsItem.PlusMinus)
                                     {
                                         case IVSoftware.Portable.Xml.Linq.XBoundObject.Placement.PlusMinus.Leaf:
                                             return Color.Gray;
@@ -122,5 +122,6 @@ namespace FilesystemViewer.WinForms
                 }
             }
         }
+        private object? _dataContextPrev = null;
     }
 }
