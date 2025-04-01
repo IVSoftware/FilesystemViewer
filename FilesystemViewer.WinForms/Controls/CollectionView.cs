@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -12,6 +13,7 @@ namespace FilesystemViewer.WinForms.Controls
 {
     public class CollectionView : FlowLayoutPanel
     {
+        readonly List<INotifyPropertyChanged> _trackedItems = new();
         public IList? ItemsSource
         {
             get => _itemsSource;
