@@ -1,6 +1,8 @@
 ﻿
 using FilesystemViewer.Portable;
+using IVSoftware.Portable.Xml.Linq.XBoundObject.Placement;
 using System.ComponentModel;
+using System.Globalization;
 
 namespace FilesystemViewer.WinForms
 {
@@ -12,9 +14,9 @@ namespace FilesystemViewer.WinForms
             Height = 50;
             PlusMinus.UseCompatibleTextRendering = true;
             PlusMinus.Font = new Font(FileAndFolderFontFamily, 16F);
-            PlusMinus.Click += (sender, e)=>
+            PlusMinus.Click += (sender, e) =>
             {
-                if(DataContext is FilesystemItem vm)
+                if (DataContext is FilesystemItem vm)
                 {
                     vm.PlusMinusToggleCommand?.Execute(DataContext);
                 }
@@ -49,23 +51,24 @@ namespace FilesystemViewer.WinForms
             }
         }
         FontFamily? _fileAndFolderFontFamily = null;
-        public new FilesystemItem? DataContext 
-        { 
+        public new FilesystemItem? DataContext
+        {
             get => (FilesystemItem?)base.DataContext;
             set
-            { 
-                if(DataContext is not null)
+            {
+                if (DataContext is not null)
                 {
                     DataContext.PropertyChanged -= localOnDataContextPropertyChanged;
                 }
                 base.DataContext = value;
-                if(DataContext is not null)
+                if (DataContext is not null)
                 {
                     DataContext.PropertyChanged += localOnDataContextPropertyChanged;
-                    foreach (var propertyName in new[] 
+                    foreach (var propertyName in new[]
                     {
                         nameof(DataContext.Text),
                         nameof(DataContext.Space),
+                        nameof(DataContext.PlusMinus),
                         nameof(DataContext.PlusMinusGlyph),
                     })
                     {
@@ -82,6 +85,7 @@ namespace FilesystemViewer.WinForms
                                 TextLabel.Text = DataContext.Text;
                                 break;
                             case nameof(PlusMinus):
+                                PlusMinus.ForeColor = localConvert();
                                 break;
                             case nameof(DataContext.Space):
                                 Spacer.Width = DataContext.Space;
@@ -89,6 +93,30 @@ namespace FilesystemViewer.WinForms
                             case nameof(DataContext.PlusMinusGlyph):
                                 PlusMinus.Text = DataContext.PlusMinusGlyph;
                                 break;
+                        }
+                        Color localConvert()
+                        {
+                            switch (DataContext)
+                            {
+                                case DriveItem:
+                                    switch (DataContext.PlusMinus)
+                                    {
+                                        case IVSoftware.Portable.Xml.Linq.XBoundObject.Placement.PlusMinus.Leaf:
+                                            return Color.Gray;
+                                        case IVSoftware.Portable.Xml.Linq.XBoundObject.Placement.PlusMinus.Collapsed:
+                                            return Color.RoyalBlue;
+                                        default:
+                                            return Color.Green;
+                                    }
+                                default:
+                                    switch (DataContext.PlusMinus)
+                                    {
+                                        case IVSoftware.Portable.Xml.Linq.XBoundObject.Placement.PlusMinus.Leaf:
+                                            return Color.Gray;
+                                        default:
+                                            return Color.Blue;
+                                    }
+                            }
                         }
                     }
                 }
